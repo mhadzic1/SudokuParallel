@@ -47,17 +47,6 @@ bool isSafe(int **board, int row, int col, int num) {
     return true;
 }
 
-bool findEmptyLocation(int **board, int &row, int &col) {
-    // Function to find an empty location in the Sudoku board
-    for (row = 0; row < N; row++) {
-        for (col = 0; col < N; col++) {
-            if (board[row][col] == 0) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
 
 bool solveSudokuStandard(int **board) {
     // Standard backtracking approach to solve Sudoku
@@ -82,8 +71,8 @@ bool solveSudokuStandard(int **board) {
     return true; // Sudoku solved
 }
 
-bool solveSudokuAdvanced(int **board, int row, int col, bool usedInRow[N][N], bool usedInCol[N][N]) {
-    // Advanced approach to solve Sudoku with memory of row and column
+
+bool solveSudokuAdvancedHelper(int **board, bool usedInRow[N][N], bool usedInCol[N][N], int row, int col) {
     if (row == N)
         return true;
 
@@ -91,15 +80,15 @@ bool solveSudokuAdvanced(int **board, int row, int col, bool usedInRow[N][N], bo
     int nextCol = (col == N - 1) ? 0 : col + 1;
 
     if (board[row][col] != 0)
-        return solveSudokuAdvanced(board, nextRow, nextCol, usedInRow, usedInCol);
+        return solveSudokuAdvancedHelper(board, usedInRow, usedInCol, nextRow, nextCol);
 
     for (int num = 1; num <= N; num++) {
-        if (!usedInRow[row][num - 1] && !usedInCol[col][num - 1] && isSafe(board, row, col, num)) {
+        if (!usedInRow[row][num - 1] && !usedInCol[col][num - 1]) {
             board[row][col] = num;
             usedInRow[row][num - 1] = true;
             usedInCol[col][num - 1] = true;
 
-            if (solveSudokuAdvanced(board, nextRow, nextCol, usedInRow, usedInCol))
+            if (solveSudokuAdvancedHelper(board, usedInRow, usedInCol, nextRow, nextCol))
                 return true;
 
             board[row][col] = 0;
@@ -109,6 +98,12 @@ bool solveSudokuAdvanced(int **board, int row, int col, bool usedInRow[N][N], bo
     }
 
     return false;
+}
+
+bool solveSudokuAdvanced(int **board) {
+    bool usedInRow[N][N] = {false};
+    bool usedInCol[N][N] = {false};
+    return solveSudokuAdvancedHelper(board, usedInRow, usedInCol, 0, 0);
 }
 
 bool solveSudokuProHelper(int **board, int row, int col, bool usedInRow[N][N], bool usedInCol[N][N], bool usedInBox[N / 3][N / 3][N]);
@@ -375,7 +370,7 @@ int main() {
     bool usedInRow3[N][N] = {false};
     bool usedInCol3[N][N] = {false};
 
-    if (solveSudokuAdvanced(sudoku3, 0, 0, usedInRow3, usedInCol3)) {
+    if (solveSudokuAdvanced(sudoku3)) {
         auto end3 = chrono::high_resolution_clock::now();
         chrono::duration<double> duration = end3 - start3;
 
@@ -389,6 +384,8 @@ int main() {
     }
 
     deleteBoard(sudoku);
+    deleteBoard(sudoku2);
+    deleteBoard(sudoku3);
 
     return 0;
 }
